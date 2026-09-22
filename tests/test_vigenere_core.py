@@ -154,7 +154,7 @@ class TestCriptoanalise(unittest.TestCase):
 
     def test_varias_chaves(self):
         trecho = TEXTO_ORIGINAL[20000:80000]
-        for chave in ("a", "z", "ok", "abc", "casa", "brasil", "segredo", "criptogr", "seguranca", "vigenerepm"):
+        for chave in ("a", "z", "ok", "abc", "casa", "livro", "brasil", "segredo", "criptogr", "seguranca", "vigenerepm"):
             with self.subTest(chave=chave):
                 resultado = v.criptoanalisar(v.criptografar(trecho, chave), 10)
                 self.assertEqual(resultado["chave"], chave)
@@ -165,10 +165,11 @@ class TestCriptoanalise(unittest.TestCase):
         self.assertEqual(resultado["chave"], "abc")
         self.assertEqual(len(resultado["pontuacoes"]), 3)
 
-    def test_chave_maior_que_o_limite_padrao(self):
-        chave = "chavedequinze"
-        cifrado = v.criptografar(TEXTO_ORIGINAL, chave)
-        self.assertEqual(v.criptoanalisar(cifrado, 15)["chave"], chave)
+    def test_chaves_maiores_que_o_limite_padrao(self):
+        for chave in ("chaveonzeok", "chavedozeabc", "chavedequinze"):
+            with self.subTest(chave=chave):
+                cifrado = v.criptografar(TEXTO_ORIGINAL, chave)
+                self.assertEqual(v.criptoanalisar(cifrado, 15)["chave"], chave)
 
     def test_texto_curto_demais(self):
         with self.assertRaises(ValueError):

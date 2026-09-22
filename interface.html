@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vigenere Lab</title>
+<style>
+:root{--bg:#070b16;--card:#11182a;--card2:#18233c;--text:#edf2ff;--muted:#91a0c3;--purple:#8b5cf6;--cyan:#22d3ee;--green:#34d399;--red:#fb7185}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% -10%,#29205c 0,transparent 32%),var(--bg);color:var(--text);font:15px Inter,system-ui,sans-serif;min-height:100vh}
+.shell{width:min(1050px,calc(100% - 40px));margin:32px auto}.brand{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:2px}.head{display:flex;align-items:end;justify-content:space-between;margin:7px 0 25px}h1{font-size:34px;margin:0}.headtools{display:flex;align-items:center;gap:12px}
+.toggle{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;cursor:pointer}.toggle input{display:none}.track{width:43px;height:24px;border-radius:20px;background:#283550;border:1px solid #405070;position:relative;transition:.25s}.track:after{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;border-radius:50%;background:#aebbd7;transition:.25s}.toggle input:checked+.track{background:var(--purple);border-color:var(--purple)}.toggle input:checked+.track:after{transform:translateX(19px);background:white}
+.tabs{display:flex;gap:8px}.tab{border:0;color:var(--muted);background:var(--card);padding:13px 22px;border-radius:12px 12px 0 0;font-weight:750;cursor:pointer}.tab.on{color:white;background:var(--purple)}
+.panel{display:none;background:linear-gradient(145deg,var(--card),#0d1425);border:1px solid #25314e;border-radius:0 18px 18px 18px;padding:28px;box-shadow:0 24px 80px #0007}.panel.on{display:block;animation:enter .35s ease}@keyframes enter{from{opacity:0;transform:translateY(8px)}}
+.grid{display:grid;grid-template-columns:1fr 210px;gap:16px}.wide{grid-column:1/-1}label{display:block;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:1px;margin:2px 0 7px}input,select{width:100%;background:var(--card2);border:1px solid #344363;border-radius:10px;padding:13px;color:var(--text);outline:none}input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #22d3ee18}.fileline{display:flex;gap:9px}.fileline input{flex:1}.browse{border:1px solid #3d4d70;border-radius:10px;background:#202c48;color:var(--text);padding:0 17px;font-weight:750;cursor:pointer;white-space:nowrap}.browse:hover{border-color:var(--cyan)}
+.stage{height:225px;background:#0a1020;border:1px solid #26314c;border-radius:14px;margin-top:20px;padding:20px;overflow:hidden;position:relative}.stage.hidden{display:none}.hint{color:var(--muted);font-size:12px;font-weight:750;letter-spacing:1px}.letters{display:flex;gap:10px;align-items:center;height:155px;overflow:hidden}.letter{min-width:27px;text-align:center;animation:pop .3s both}.letter b,.letter em,.letter strong{display:block;font:700 18px ui-monospace}.letter em{color:var(--purple);font-size:14px;margin:13px 0;font-style:normal}.letter strong{color:var(--green)}@keyframes pop{from{opacity:0;transform:translateY(14px)}}
+.working{height:160px;display:grid;place-items:center;color:var(--cyan);font-weight:800}.working:before{content:'';width:55px;height:55px;border:3px solid #283653;border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;position:absolute}@keyframes spin{to{transform:rotate(360deg)}}.stepmsg{position:absolute;right:20px;top:18px;color:var(--cyan);font-size:12px;font-weight:800}.keyrow{height:145px;display:flex;align-items:center;justify-content:center;gap:12px}.keychar{width:38px;height:45px;display:grid;place-items:center;border:1px solid #43537a;border-radius:9px;background:#18233c;color:var(--green);font:700 21px ui-monospace;animation:pop .25s both}
+.ticker{height:155px;margin-top:13px;display:grid;grid-template-rows:repeat(3,1fr);gap:5px}.tickerrow{display:grid;grid-template-columns:82px 1fr;align-items:center;min-width:0}.tickerlabel{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.7px}.tickerclip{height:42px;display:flex;align-items:center;overflow:hidden;border-left:2px solid #344363;padding-left:10px;mask-image:linear-gradient(90deg,transparent 0,#000 2%,#000 96%,transparent 100%)}.tickertrack{display:inline-block;white-space:nowrap;color:var(--text);font:700 17px/1 ui-monospace,SFMono-Regular,Menlo,monospace;will-change:transform}.tickerrow.key .tickertrack{color:var(--purple)}.tickerrow.result .tickertrack{color:var(--green)}
+.report{margin-top:18px;background:#0a1020;border:1px solid #26314c;border-radius:14px;padding:20px;color:var(--text);animation:enter .35s ease}.report h2{font-size:18px;margin:0 0 15px}.report h3{font-size:13px;color:var(--cyan);margin:20px 0 9px;text-transform:uppercase;letter-spacing:.7px}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.summary div{background:var(--card2);border:1px solid #33415f;border-radius:9px;padding:11px}.summary small{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}.summary strong{font-size:16px;color:var(--green)}.report table{width:100%;border-collapse:collapse;font-size:12px}.report th{text-align:left;color:var(--muted);padding:8px;border-bottom:1px solid #35415c}.report td{padding:8px;border-bottom:1px solid #202b44;vertical-align:top}.report tr.best td{background:#173a36;color:var(--green)}.report code{font:12px ui-monospace;color:#c7d2fe;word-break:break-all}.report ul{color:var(--muted);line-height:1.7;margin:8px 0;padding-left:20px}.decoded{max-height:110px;overflow:auto;background:#080d1a;border:1px solid #283553;border-radius:8px;padding:11px;color:#b8f3d9;font:12px/1.6 ui-monospace;word-break:break-all}
+.bars{height:165px;display:flex;align-items:end;gap:12px;padding-top:16px}.barbox{height:100%;flex:1;display:flex;flex-direction:column;justify-content:end;text-align:center;color:var(--muted);font-size:11px}.bar{background:linear-gradient(var(--cyan),var(--purple));border-radius:6px 6px 2px 2px;animation:grow .7s ease both;transform-origin:bottom}.bar.best{background:var(--green)}@keyframes grow{from{transform:scaleY(0)}}
+.actions{display:flex;align-items:center;justify-content:space-between;margin-top:18px}.actionbuttons{display:flex;gap:9px}.status{color:var(--muted);max-width:62%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.status.ok{color:var(--green)}.status.err{color:var(--red)}button.go{border:0;border-radius:10px;padding:13px 19px;background:linear-gradient(135deg,var(--purple),#6d3bdd);color:white;font-weight:800;cursor:pointer}button.go:disabled{opacity:.5}.openfile{border:1px solid #425274;border-radius:10px;padding:12px 16px;background:#202c48;color:var(--text);font-weight:750;cursor:pointer}.openfile:hover{border-color:var(--cyan);background:#293657}.preview{color:#bdc9e8;font:13px ui-monospace;line-height:1.7;word-break:break-all;margin-top:12px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.shell{width:calc(100% - 20px);margin:15px auto}h1{font-size:26px}}
+</style>
+</head>
+<body><main class="shell"><div class="brand">VIGENERE</div><div class="head"><h1>Laboratório de criptografia</h1><div class="headtools"><label class="toggle" title="Entrega o resultado sem mostrar as etapas"><span>Pular animação</span><input id="skip" type="checkbox"><span class="track"></span></label></div></div>
+<nav class="tabs"><button class="tab on" data-id="cifrar">Cifrar</button><button class="tab" data-id="quebrar">Quebrar cifra</button></nav>
+<section class="panel on" id="cifrar"><div class="grid"><div class="wide"><label>ARQUIVO ORIGINAL</label><div class="fileline"><input id="co" value="exemplo_original.txt"><button class="browse" onclick="pick('fc')">Procurar arquivo…</button><input id="fc" type="file" accept=".txt,text/plain" hidden></div></div><div><label>CHAVE</label><input id="ck" value="segredo" type="text" autocomplete="off"></div><div><label>ARQUIVO DE SAÍDA</label><input id="cs" value="texto_criptografado.txt"></div></div><div class="stage hidden" id="stageC"><div class="hint">FLUXO DA CIFRAGEM</div><div class="stepmsg" id="stepC"></div><div id="animC"></div></div><div class="actions"><div class="status" id="stC">Use apenas o nome para salvar na pasta do programa.</div><div class="actionbuttons"><button class="openfile" id="openC" onclick="abrirArquivo(this)" hidden>Abrir arquivo gerado</button><button class="go" onclick="cifrar(this)">Criptografar arquivo</button></div></div></section>
+<section class="panel" id="quebrar"><div class="grid"><div class="wide"><label>ARQUIVO CRIPTOGRAFADO</label><div class="fileline"><input id="qo" value="exemplo_criptografado.txt"><button class="browse" onclick="pick('fq')">Procurar arquivo…</button><input id="fq" type="file" accept=".txt,text/plain" hidden></div></div><div><label>ARQUIVO DE SAÍDA</label><input id="qs" value="texto_decifrado.txt"></div><div><label>TAMANHO MÁXIMO DA CHAVE</label><select id="qm"></select></div></div><div class="stage hidden" id="stageQ"><div class="hint">ANÁLISE DE FREQUÊNCIAS E IC</div><div class="stepmsg" id="stepQ"></div><div id="animQ"></div></div><div class="report" id="reportQ" hidden></div><div class="actions"><div class="status" id="stQ">Use apenas o nome para abrir e salvar na pasta do programa.</div><div class="actionbuttons"><button class="openfile" id="openQ" onclick="abrirArquivo(this)" hidden>Abrir arquivo gerado</button><button class="go" onclick="quebrar(this)">Quebrar criptografia</button></div></div></section></main>
+<script>
+let conteudoC=null,conteudoQ=null;
+ck.value='segredo';
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.getElementById(b.dataset.id).classList.add('on')});
+for(let i=2;i<=20;i++)qm.add(new Option(i,i));qm.value=10;
+function pick(id){document.getElementById(id).click()}
+fc.onchange=async()=>{if(fc.files[0]){co.value=fc.files[0].name;conteudoC=await fc.files[0].text()}}
+fq.onchange=async()=>{if(fq.files[0]){qo.value=fq.files[0].name;conteudoQ=await fq.files[0].text()}}
+co.oninput=()=>conteudoC=null;qo.oninput=()=>conteudoQ=null;
+async function post(url,data){let r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});let j=await r.json();if(!r.ok)throw Error(j.erro);return j}
+function status(id,text,tipo=''){let e=document.getElementById(id);e.textContent=text;e.className='status '+tipo}
+async function abrirArquivo(botao){let texto=botao.textContent;botao.disabled=true;botao.textContent='Abrindo…';try{await post('/api/abrir',{arquivo:botao.dataset.arquivo})}catch(e){alert('Não foi possível abrir o arquivo: '+e.message)}finally{botao.disabled=false;botao.textContent=texto}}
+const pausa=ms=>new Promise(ok=>setTimeout(ok,ms));
+function estruturaFaixas(animacao,rotulos){
+    animacao.innerHTML=`<div class="ticker"><div class="tickerrow"><span class="tickerlabel">${rotulos[0]}</span><div class="tickerclip"><span class="tickertrack"></span></div></div><div class="tickerrow key"><span class="tickerlabel">CHAVE</span><div class="tickerclip"><span class="tickertrack"></span></div></div><div class="tickerrow result"><span class="tickerlabel">${rotulos[1]}</span><div class="tickerclip"><span class="tickertrack"></span></div></div></div>`;
+    return [...animacao.querySelectorAll('.tickertrack')];
+}
+async function animarFaixas(stage,animacao,passo,entrada,chave,resultado,decifrando=false,duracaoFixa=null){
+    stage.classList.remove('hidden');
+    const repetida=chave.repeat(Math.ceil(entrada.length/chave.length)).slice(0,entrada.length);
+    const faixas=estruturaFaixas(animacao,decifrando?['CIFRADO','DECIFRADO']:['ORIGINAL','CIFRADO']);
+    faixas[0].textContent='m';
+    await pausa(20);
+    const largura=faixas[0].getBoundingClientRect().width||10;
+    const clip=faixas[0].parentElement;
+    const visiveis=Math.min(entrada.length,Math.max(1,Math.floor(clip.clientWidth/largura)));
+    for(let fim=1;fim<=visiveis;fim+=2){
+        const ate=Math.min(fim+1,visiveis);
+        faixas[0].textContent=entrada.slice(0,ate);
+        faixas[1].textContent=repetida.slice(0,ate);
+        faixas[2].textContent=resultado.slice(0,ate);
+        passo.textContent=`Preenchendo o quadro • ${ate.toLocaleString('pt-BR')} / ${entrada.length.toLocaleString('pt-BR')}`;
+        await pausa(32);
+    }
+    faixas[0].textContent=entrada;
+    faixas[1].textContent=repetida;
+    faixas[2].textContent=resultado;
+    await pausa(40);
+    const distancia=Math.max(0,faixas[0].scrollWidth-clip.clientWidth+18);
+    const duracao=duracaoFixa||Math.min(18000,Math.max(4000,entrada.length/20000*1000));
+    const inicio=performance.now();
+    const contador=setInterval(()=>{
+        const progresso=Math.min(1,(performance.now()-inicio)/duracao);
+        const indice=Math.min(entrada.length-1,Math.floor(visiveis+(entrada.length-visiveis)*progresso));
+        const sinal=decifrando?'−':'+';
+        passo.textContent=`${(indice+1).toLocaleString('pt-BR')} / ${entrada.length.toLocaleString('pt-BR')} • (${entrada[indice]} ${sinal} ${repetida[indice]}) mod 26 = ${resultado[indice]}`;
+    },80);
+    try{
+        if(distancia){
+            const movimentos=faixas.map(f=>f.animate([{transform:'translateX(0)'},{transform:`translateX(-${distancia}px)`}],{duration:duracao,easing:'linear',fill:'forwards'}));
+            await Promise.all(movimentos.map(m=>m.finished));
+        }else await pausa(duracao);
+    }finally{clearInterval(contador)}
+    passo.textContent=`Texto completo percorrido • ${entrada.length.toLocaleString('pt-BR')} letras`;
+    await pausa(350);
+    stage.classList.add('hidden');
+}
+async function animarCifra(r){
+    await animarFaixas(stageC,animC,stepC,r.original,r.chave,r.cifrado);
+}
+async function animarQuebra(r){
+    stageQ.classList.remove('hidden');
+    const max=Math.max(...Object.values(r.ics));
+    stepQ.textContent='1/3 • Comparando índices de coincidência';
+    animQ.innerHTML='<div class="bars"></div>';
+    let area=animQ.firstChild;
+    for(const [k,v] of Object.entries(r.ics)){
+        const d=document.createElement('div');
+        d.className='barbox';
+        d.innerHTML=`<div class="bar ${Number(k)===r.tamanho_candidato?'best':''}" style="height:${Math.max(4,v/max*115)}px"></div><span>${k}</span>`;
+        area.appendChild(d);
+        await pausa(75);
+    }
+    await pausa(350);
+    stepQ.textContent='2/3 • Inferindo cada letra da chave';
+    animQ.innerHTML='<div class="keyrow"></div>';
+    area=animQ.firstChild;
+    for(const letra of r.chave){
+        const d=document.createElement('div');
+        d.className='keychar';
+        d.textContent=letra;
+        area.appendChild(d);
+        await pausa(140);
+    }
+    await pausa(350);
+    stepQ.textContent='3/3 • Aplicando os deslocamentos inversos';
+    await animarFaixas(stageQ,animQ,stepQ,r.cifrado,r.chave,r.decifrado,true,12000);
+}
+function mostrarRelatorio(r){let linhasIC=Object.entries(r.ics).map(([tam,ic])=>`<tr class="${Number(tam)===r.tamanho_candidato?'best':''}"><td>${tam}</td><td>${Number(ic).toFixed(5)}</td><td>${Number(tam)===r.tamanho_candidato?'Maior IC médio — candidato escolhido':'Comparado'}</td></tr>`).join('');let linhasColunas=r.colunas.map(c=>`<tr><td>${c.posicao}</td><td><code>${c.amostra}…</code></td><td>${c.principais.map(f=>`${f.letra}: ${f.percentual.toFixed(1)}%`).join(' · ')}</td><td>${c.deslocamento}</td><td><strong>${c.letra_chave}</strong></td><td>${c.qui_quadrado.toFixed(2)}</td></tr>`).join('');reportQ.innerHTML=`<h2>Resultado da criptoanálise</h2><div class="summary"><div><small>TAMANHOS TESTADOS</small><strong>1 a ${Object.keys(r.ics).length}</strong></div><div><small>TAMANHO ESTIMADO</small><strong>${r.tamanho}</strong></div><div><small>CHAVE RECUPERADA</small><strong>${r.chave}</strong></div></div><h3>Índice de Coincidência</h3><table><thead><tr><th>Tamanho</th><th>IC médio</th><th>Comparação</th></tr></thead><tbody>${linhasIC}</tbody></table><h3>Análise de frequência</h3><table><thead><tr><th>Posição</th><th>Amostra do subtexto</th><th>Frequências principais</th><th>Desloc.</th><th>Chave</th><th>χ²</th></tr></thead><tbody>${linhasColunas}</tbody></table><h3>Texto decifrado reconstruído</h3><div class="decoded">${r.decifrado.slice(0,900)}${r.decifrado.length>900?'…':''}</div>`;reportQ.hidden=false}
+async function cifrar(btn){btn.disabled=true;openC.hidden=true;status('stC','Higienizando e aplicando módulo 26…');try{let r=await post('/api/cifrar',{entrada:co.value,saida:cs.value,chave:ck.value,conteudo:conteudoC});if(!skip.checked)await animarCifra(r);openC.dataset.arquivo=r.saida;openC.hidden=false;status('stC',`Concluído • ${r.total} letras • ${r.saida}`,'ok')}catch(e){stageC.classList.add('hidden');status('stC',e.message,'err')}finally{btn.disabled=false}}
+async function quebrar(btn){btn.disabled=true;openQ.hidden=true;reportQ.hidden=true;status('stQ','Calculando IC e frequências do português…');try{let r=await post('/api/quebrar',{entrada:qo.value,saida:qs.value,maximo:qm.value,conteudo:conteudoQ});if(!skip.checked)await animarQuebra(r);mostrarRelatorio(r);openQ.dataset.arquivo=r.saida;openQ.hidden=false;status('stQ',`Chave provável: ${r.chave} • tamanho ${r.tamanho} • ${r.saida}`,'ok')}catch(e){stageQ.classList.add('hidden');status('stQ',e.message,'err')}finally{btn.disabled=false}}
+</script></body></html>

@@ -185,10 +185,40 @@ IC = soma(f * (f - 1)) / (N * (N - 1))
 `f` é a quantidade de ocorrências de uma letra e `N` é o tamanho da coluna.
 O maior IC médio indica o tamanho candidato.
 
+Com o tamanho certo, cada coluna foi cifrada por uma única letra da chave
+(uma cifra de César) e mantém o IC do português, perto de 0,072. Com um
+tamanho errado, a coluna mistura deslocamentos e o IC cai para perto do
+aleatório, 1/26 ≈ 0,038.
+
 Em cada coluna, os 26 deslocamentos são comparados à distribuição típica
-do português por qui-quadrado. O menor custo determina a letra da chave.
-Repetições exatas na chave inferida são reduzidas ao menor período.
-Os deslocamentos inversos reconstroem o texto higienizado.
+do português por qui-quadrado:
+
+```text
+qui2 = soma((observado - esperado)^2 / esperado)
+```
+
+O menor custo determina a letra da chave. Como múltiplos do tamanho real
+também têm IC alto, repetições exatas na chave inferida são reduzidas ao
+menor período, e a análise é refeita nesse período. Os deslocamentos
+inversos reconstroem o texto higienizado.
+
+### Desempenho
+
+Os cálculos evitam laços em Python letra a letra:
+
+- as letras de cada coluna são contadas uma única vez com `str.count`, e os
+  26 deslocamentos candidatos reaproveitam essas contagens, apenas
+  rotacionadas;
+- cifrar e decifrar deslocam cada coluna inteira de uma vez com
+  `str.translate`;
+- a higienização remove os caracteres fora de `a-z` com uma expressão regular.
+
+Tempo de `criptoanalisar`, medido no Windows com Python 3:
+
+| Entrada | Letras | Antes | Depois |
+| --- | --- | --- | --- |
+| Dom Casmurro | 308.887 | 2,66 s | 0,11 s |
+| Dom Casmurro repetido 20 vezes | 6.177.740 | 50,4 s | 2,1 s |
 
 ### Limitações
 
@@ -212,7 +242,8 @@ são processados em memória; o consumo cresce com o tamanho da entrada.
 | `requirements.txt` | Dependências (sem pacotes externos) |
 | `vigenere_web.py` | Servidor local e operações com arquivos |
 | `interface.html` | Interface principal, animações e relatório |
-| `vigenere_core.py` | Algoritmos com comentários essenciais |
+| `vigenere_core.py` | Algoritmos comentados |
+| `tests/test_vigenere_core.py` | Testes automatizados dos algoritmos |
 | `exemplo_original.txt` | Dom Casmurro para demonstração |
 | `exemplo_criptografado.txt` | Exemplo cifrado com segredo |
 
@@ -232,6 +263,23 @@ Execute na pasta do projeto, depois de preparar o ambiente.
 .venv\Scripts\python.exe vigenere_web.py
 ```
 
+## Testes
+
+Execute na pasta do projeto:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+No Windows, use `py -3 -m unittest discover -s tests -v`.
+
+Os testes usam apenas a biblioteca padrão. Eles cobrem a higienização, um
+vetor conhecido da cifra (`ATTACKATDAWN` com `LEMON`), a ida e volta com
+várias chaves e o IC do português e do texto aleatório. Também conferem o
+qui-quadrado e a cifra contra implementações diretas das fórmulas, a quebra
+do exemplo e de chaves de 1 a 13 letras, a redução de chaves repetidas e um
+arquivo com cerca de 6 milhões de letras.
+
 ## Solução de problemas
 
 | Problema | Solução |
@@ -248,5 +296,6 @@ Execute na pasta do projeto, depois de preparar o ambiente.
 | Arquivo não abre no Linux | Verifique xdg-open e um aplicativo associado a .txt. |
 | Chave estimada incorreta | Use texto maior em português e confira o limite de tamanho da chave. |
 
-O instalador foi executado no macOS. Windows e Linux ainda precisam de
-validação nos respectivos sistemas.
+O instalador foi executado no macOS. No Windows, a preparação
+(`instalar.py --preparar`), o servidor e as operações de cifrar e quebrar
+foram testados. O Linux ainda precisa de validação.

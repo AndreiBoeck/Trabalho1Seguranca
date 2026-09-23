@@ -18,6 +18,9 @@
 .bars{height:165px;display:flex;align-items:end;gap:12px;padding-top:16px}.barbox{height:100%;flex:1;display:flex;flex-direction:column;justify-content:end;text-align:center;color:var(--muted);font-size:11px}.bar{background:linear-gradient(var(--cyan),var(--purple));border-radius:6px 6px 2px 2px;animation:grow .7s ease both;transform-origin:bottom}.bar.best{background:var(--green)}@keyframes grow{from{transform:scaleY(0)}}
 .actions{display:flex;align-items:center;justify-content:space-between;margin-top:18px}.actionbuttons{display:flex;gap:9px}.status{color:var(--muted);max-width:62%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.status.ok{color:var(--green)}.status.err{color:var(--red)}button.go{border:0;border-radius:10px;padding:13px 19px;background:linear-gradient(135deg,var(--purple),#6d3bdd);color:white;font-weight:800;cursor:pointer}button.go:disabled{opacity:.5}.openfile{border:1px solid #425274;border-radius:10px;padding:12px 16px;background:#202c48;color:var(--text);font-weight:750;cursor:pointer}.openfile:hover{border-color:var(--cyan);background:#293657}.preview{color:#bdc9e8;font:13px ui-monospace;line-height:1.7;word-break:break-all;margin-top:12px}
 @media(max-width:700px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.shell{width:calc(100% - 20px);margin:15px auto}h1{font-size:26px}}
+.tickerrow{grid-template-columns:82px minmax(0,1fr)}
+.tickerclip{min-width:0;position:relative;display:block;contain:layout paint}
+.tickertrack{position:absolute;left:10px;top:12px;font-variant-ligatures:none}
 </style>
 </head>
 <body><main class="shell"><div class="brand">VIGENERE</div><div class="head"><h1>Laboratório de criptografia</h1><div class="headtools"><label class="toggle" title="Entrega o resultado sem mostrar as etapas"><span>Pular animação</span><input id="skip" type="checkbox"><span class="track"></span></label></div></div>
@@ -43,40 +46,50 @@ function estruturaFaixas(animacao,rotulos){
 }
 async function animarFaixas(stage,animacao,passo,entrada,chave,resultado,decifrando=false,duracaoFixa=null){
     stage.classList.remove('hidden');
-    const repetida=chave.repeat(Math.ceil(entrada.length/chave.length)).slice(0,entrada.length);
     const faixas=estruturaFaixas(animacao,decifrando?['CIFRADO','DECIFRADO']:['ORIGINAL','CIFRADO']);
-    faixas[0].textContent='m';
-    await pausa(20);
-    const largura=faixas[0].getBoundingClientRect().width||10;
+    if(document.fonts && document.fonts.ready)await document.fonts.ready;
+    faixas[0].textContent='mmmmmmmmmm';
+    const largura=faixas[0].getBoundingClientRect().width/10||10;
     const clip=faixas[0].parentElement;
-    const visiveis=Math.min(entrada.length,Math.max(1,Math.floor(clip.clientWidth/largura)));
+    let area=Math.max(largura,clip.clientWidth-12);
+    const visiveis=Math.min(entrada.length,Math.max(1,Math.floor(area/largura)));
+    const sinal=decifrando?'−':'+';
+    // Somente a janela visivel entra no DOM; as tres faixas usam o mesmo indice.
+    function desenhar(deslocamento,limite=entrada.length){
+        const primeiro=Math.max(0,Math.floor(deslocamento/largura));
+        const fim=Math.min(limite,primeiro+Math.ceil(area/largura)+2);
+        const chaveVisivel=Array.from({length:Math.max(0,fim-primeiro)},(_,i)=>chave[(primeiro+i)%chave.length]).join('');
+        const trechos=[entrada.slice(primeiro,fim),chaveVisivel,resultado.slice(primeiro,fim)];
+        const ajuste=primeiro*largura-deslocamento;
+        faixas.forEach((faixa,i)=>{
+            faixa.textContent=trechos[i];
+            faixa.style.transform=`translate3d(${ajuste}px,0,0)`;
+        });
+    }
     for(let fim=1;fim<=visiveis;fim+=2){
         const ate=Math.min(fim+1,visiveis);
-        faixas[0].textContent=entrada.slice(0,ate);
-        faixas[1].textContent=repetida.slice(0,ate);
-        faixas[2].textContent=resultado.slice(0,ate);
+        desenhar(0,ate);
         passo.textContent=`Preenchendo o quadro • ${ate.toLocaleString('pt-BR')} / ${entrada.length.toLocaleString('pt-BR')}`;
         await pausa(32);
     }
-    faixas[0].textContent=entrada;
-    faixas[1].textContent=repetida;
-    faixas[2].textContent=resultado;
-    await pausa(40);
-    const distancia=Math.max(0,faixas[0].scrollWidth-clip.clientWidth+18);
     const duracao=duracaoFixa||Math.min(18000,Math.max(4000,entrada.length/20000*1000));
-    const inicio=performance.now();
-    const contador=setInterval(()=>{
-        const progresso=Math.min(1,(performance.now()-inicio)/duracao);
-        const indice=Math.min(entrada.length-1,Math.floor(visiveis+(entrada.length-visiveis)*progresso));
-        const sinal=decifrando?'−':'+';
-        passo.textContent=`${(indice+1).toLocaleString('pt-BR')} / ${entrada.length.toLocaleString('pt-BR')} • (${entrada[indice]} ${sinal} ${repetida[indice]}) mod 26 = ${resultado[indice]}`;
-    },80);
-    try{
-        if(distancia){
-            const movimentos=faixas.map(f=>f.animate([{transform:'translateX(0)'},{transform:`translateX(-${distancia}px)`}],{duration:duracao,easing:'linear',fill:'forwards'}));
-            await Promise.all(movimentos.map(m=>m.finished));
-        }else await pausa(duracao);
-    }finally{clearInterval(contador)}
+    await new Promise(resolve=>{
+        let anterior=null,decorrido=0;
+        function quadro(agora){
+            // Ao voltar de uma aba em segundo plano, retoma sem saltar ate o fim.
+            if(anterior!==null && !document.hidden)decorrido+=Math.min(agora-anterior,100);
+            anterior=agora;
+            area=Math.max(largura,clip.clientWidth-12);
+            const progresso=Math.min(1,decorrido/duracao);
+            const distancia=Math.max(0,entrada.length*largura-area);
+            const deslocamento=distancia*progresso;
+            desenhar(deslocamento);
+            const indice=Math.max(0,Math.min(entrada.length-1,Math.floor((deslocamento+area)/largura)-1));
+            passo.textContent=`${(indice+1).toLocaleString('pt-BR')} / ${entrada.length.toLocaleString('pt-BR')} • (${entrada[indice]} ${sinal} ${chave[indice%chave.length]}) mod 26 = ${resultado[indice]}`;
+            if(progresso<1)requestAnimationFrame(quadro);else resolve();
+        }
+        requestAnimationFrame(quadro);
+    });
     passo.textContent=`Texto completo percorrido • ${entrada.length.toLocaleString('pt-BR')} letras`;
     await pausa(350);
     stage.classList.add('hidden');

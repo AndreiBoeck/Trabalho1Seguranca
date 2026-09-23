@@ -285,6 +285,7 @@ arquivo com cerca de 6 milhões de letras.
 | Problema | Solução |
 | --- | --- |
 | Python não encontrado | Instale Python 3.9+ e reabra o terminal; no Windows, confira o PATH. |
+| Windows: Unable to create process usando um caminho como C:\\Python314\\python.exe | O launcher aponta para um Python ausente. Atualize o instalador, que testa alternativas funcionais. Se nenhuma existir, instale ou repare Python com Add Python to PATH. |
 | Falha ao criar venv no Linux | Verifique o suporte a venv; no Debian/Ubuntu, confira o pacote python3-venv. |
 | Venv incompleta ou de outro sistema | Encerre o programa, renomeie a pasta .venv e execute novamente o instalador. |
 | Arquivo essencial ausente | Extraia o ZIP completo, mantendo os arquivos juntos. |
